@@ -1,10 +1,10 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_BASE_URL = 
+  process.env.NEXT_PUBLIC_API_URL || "https://prime-property-backend-hazel.vercel.app";
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL.replace(/\/$/, "")}/api`,
   withCredentials: false, 
   headers: {
     Accept: "application/json",
