@@ -5,7 +5,7 @@ const API_BASE_URL =
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: false, 
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -13,29 +13,26 @@ export const apiClient = axios.create({
   },
 });
 
-let csrfInitialized = false;
+let csrfInitialized = true;
 
 export async function ensureCsrfCookie(): Promise<void> {
-  if (csrfInitialized) return;
-  await apiClient.get("/sanctum/csrf-cookie");
-  csrfInitialized = true;
+  return; 
 }
 
 export function resetCsrfState(): void {
-  csrfInitialized = false;
+  csrfInitialized = true;
 }
 
 function getCsrfToken(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-  if (!match) return null;
-  return decodeURIComponent(match[1]);
+  return null;
 }
 
 apiClient.interceptors.request.use((config) => {
-  const token = getCsrfToken();
-  if (token) {
-    config.headers["X-XSRF-TOKEN"] = token;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token"); 
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
   }
   return config;
 });
