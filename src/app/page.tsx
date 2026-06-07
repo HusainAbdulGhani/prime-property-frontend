@@ -1,65 +1,67 @@
-import Image from "next/image";
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
+import { HeroSection } from "@/components/home/HeroSection";
+import { FeaturedPropertiesGrid } from "@/components/properties/FeaturedPropertiesGrid";
+import { ValuePropositions } from "@/components/home/ValuePropositions";
+import { fetchProperties } from "@/lib/api/properties";
+import type { Property } from "@/types/property";
 
-export default function Home() {
+import { RevealOnScroll, StaggerHeader } from "./HomeClientAnimations";
+
+export default async function HomePage() {
+  let properties: Property[] = [];
+
+  try {
+    const response = await fetchProperties({ per_page: 25 });
+    properties = response.data.slice(0, 6);
+  } catch {
+    properties = [];
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <PublicHeader />
+      <HeroSection />
+      <section id="properti-unggulan" className="relative bg-neutralWhite py-20 lg:py-24 border-t border-primaryBlack/5 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          
+          <StaggerHeader 
+            badge="Katalog Terbaru"
+            title="Properti Unggulan"
+            description={properties.length > 0
+              ? `${properties.length} listing pilihan untuk Anda`
+              : "Segera hadir"
+            }
+          />
+          
+          <RevealOnScroll variant="fadeUp" delay={0.2}>
+            <FeaturedPropertiesGrid properties={properties} />
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      <ValuePropositions />
+      <section className="relative bg-primaryBlack py-24 text-center border-t border-primaryBlack/10 overflow-hidden">
+        <RevealOnScroll variant="scaleUp" className="max-w-4xl mx-auto px-6 flex flex-col items-center z-10 relative">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-4">
+            Konsultasikan Investasi Properti Anda
+          </h2>
+          <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-2xl mb-8">
+            Hubungi konsultan ahli kami sekarang untuk mendapatkan rekomendasi ruko atau villa premium yang paling sesuai dengan portofolio investasi Anda.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/kontak"
+            className="group relative rounded-xl bg-accentGold px-8 py-4 text-sm font-bold tracking-wide text-primaryBlack shadow-lg overflow-hidden block transition-transform duration-300 active:scale-[0.98]"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 group-hover:animate-[shimmer_0.75s_ease-in-out]" />
+            Mulai Konsultasi
           </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        </RevealOnScroll>
+
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accentGold/10 rounded-full blur-[120px] pointer-events-none" />
+      </section>
+
+      <PublicFooter />
+    </>
   );
 }
