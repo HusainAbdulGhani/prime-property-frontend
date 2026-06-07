@@ -33,10 +33,10 @@ export async function loginAgent(
   const data = await apiRequest<LoginResponse>(
     {
       method: "POST",
-      url: "/api/agent/login",
+      url: "/agent/login",
       data: { email, password },
     },
-    { requireCsrf: true },
+    { requireCsrf: false },
   );
   storeAgent(data.user);
   return data;
@@ -45,8 +45,11 @@ export async function loginAgent(
 export async function logoutAgent(): Promise<void> {
   try {
     await apiRequest(
-      { method: "POST", url: "/api/agent/logout" },
-      { requireCsrf: true },
+      { 
+        method: "POST", 
+        url: "/agent/logout"
+      },
+      { requireCsrf: false },
     );
   } finally {
     clearStoredAgent();
