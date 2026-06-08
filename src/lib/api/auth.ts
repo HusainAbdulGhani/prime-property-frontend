@@ -44,14 +44,23 @@ export async function loginAgent(
 
 export async function logoutAgent(): Promise<void> {
   try {
+    const token = localStorage.getItem("agent_token"); 
+
     await apiRequest(
       { 
         method: "POST", 
-        url: "/agent/logout"
+        url: "/agent/logout",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       },
       { requireCsrf: false },
     );
-  } finally {
+    clearStoredAgent();
+    resetCsrfState();
+
+  } catch (error) {
+    console.error("Gagal logout di server, tapi tetep kita bersihin lokal:", error);
     clearStoredAgent();
     resetCsrfState();
   }
