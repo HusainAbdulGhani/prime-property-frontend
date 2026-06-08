@@ -32,7 +32,7 @@ export async function fetchProperties(
 ): Promise<PaginatedProperties> {
   return apiRequest<PaginatedProperties>({
     method: "GET",
-    url: "/api/properties",
+    url: "/properties",
     params: buildQueryParams(params),
   });
 }
