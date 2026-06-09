@@ -2,9 +2,9 @@ import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://prime-property-backend-hazel.vercel.app";
-const API_ORIGIN = API_BASE_URL.replace(/\/$/, "");
-const API_ENDPOINT = `${API_ORIGIN}/api`;
+  "https://merry-trust-production-fab3.up.railway.app";
+const API_ENDPOINT = `${API_BASE_URL.replace(/\/$/, "")}/api`;
+const AUTH_TOKEN_KEY = "prime_property_token";
 
 const commonHeaders = {
   Accept: "application/json",
@@ -14,50 +14,12 @@ const commonHeaders = {
 
 export const apiClient = axios.create({
   baseURL: API_ENDPOINT,
-  withCredentials: true,
-  xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
-  withXSRFToken: true,
   headers: commonHeaders,
 });
-
-const csrfClient = axios.create({
-  baseURL: API_ORIGIN,
-  withCredentials: true,
-  headers: commonHeaders,
-});
-
-let csrfInitialized = false;
-
-export async function ensureCsrfCookie(): Promise<void> {
-  if (typeof window === "undefined") return;
-
-  if (csrfInitialized) {
-    return;
-  }
-
-  await csrfClient.get("/sanctum/csrf-cookie");
-
-  csrfInitialized = true;
-}
-
-export function resetCsrfState(): void {
-  csrfInitialized = false;
-}
-
-function requiresCsrfByMethod(method?: string): boolean {
-  const normalizedMethod = method?.toLowerCase();
-  return (
-    normalizedMethod === "post" ||
-    normalizedMethod === "put" ||
-    normalizedMethod === "patch" ||
-    normalizedMethod === "delete"
-  );
-}
 
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -67,17 +29,22 @@ apiClient.interceptors.request.use((config) => {
 
 export async function apiRequest<T>(
   config: AxiosRequestConfig,
-  options?: { requireCsrf?: boolean },
 ): Promise<T> {
-  const shouldInitializeCsrf =
-    options?.requireCsrf ?? requiresCsrfByMethod(config.method);
-
-  if (shouldInitializeCsrf) {
-    await ensureCsrfCookie();
-  }
-
   const response = await apiClient.request<T>(config);
   return response.data;
+}
+
+export function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function storeAuthToken(token: string): void {
+  sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearAuthToken(): void {
+  sessionStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
 export function isAxiosError(error: unknown): error is AxiosError {

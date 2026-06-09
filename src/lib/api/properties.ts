@@ -57,7 +57,6 @@ export async function createProperty(
 ): Promise<{ message: string; data: Property }> {
   return apiRequest(
     { method: "POST", url: "/properties", data: payload },
-    { requireCsrf: true },
   );
 }
 
@@ -67,13 +66,11 @@ export async function updateProperty(
 ): Promise<{ message: string; data: Property }> {
   return apiRequest(
     { method: "PUT", url: `/properties/${id}`, data: payload },
-    { requireCsrf: true },
   );
 }
 
 export async function deleteProperty(id: number): Promise<{ message: string }> {
   return apiRequest(
     { method: "DELETE", url: `/properties/${id}` },
-    { requireCsrf: true },
   );
 }

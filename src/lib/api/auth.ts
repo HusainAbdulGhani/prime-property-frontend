@@ -1,8 +1,9 @@
 import type { AgentUser, LoginResponse, LockoutError } from "@/types/auth";
 import {
+  clearAuthToken,
   apiRequest,
   isAxiosError,
-  resetCsrfState,
+  storeAuthToken,
 } from "@/lib/api/client";
 
 const AUTH_STORAGE_KEY = "prime_property_agent";
@@ -57,58 +58,54 @@ function extractAgentUser(payload: unknown): AgentUser | null {
   );
 }
 
-function extractMessage(payload: unknown): string | undefined {
+function extractToken(payload: unknown): string | undefined {
   if (!payload || typeof payload !== "object") return undefined;
 
   const candidate = payload as {
-    message?: unknown;
-    data?: { message?: unknown };
+    token?: unknown;
+    access_token?: unknown;
+    data?: { token?: unknown; access_token?: unknown };
   };
 
-  if (typeof candidate.message === "string") return candidate.message;
-  if (typeof candidate.data?.message === "string") return candidate.data.message;
+  if (typeof candidate.token === "string") return candidate.token;
+  if (typeof candidate.access_token === "string") return candidate.access_token;
+  if (typeof candidate.data?.token === "string") return candidate.data.token;
+  if (typeof candidate.data?.access_token === "string") return candidate.data.access_token;
 
   return undefined;
-}
-
-async function fetchCurrentAgent(): Promise<AgentUser> {
-  const candidateEndpoints = ["/user", "/agent/me", "/agent/profile"];
-
-  for (const url of candidateEndpoints) {
-    try {
-      const payload = await apiRequest<unknown>({ method: "GET", url });
-      const user = extractAgentUser(payload);
-      if (user) return user;
-    } catch {
-      continue;
-    }
-  }
-
-  throw new Error(
-    "Login berhasil, tetapi data agent tidak bisa diambil dari session backend.",
-  );
 }
 
 export async function loginAgent(
   email: string,
   password: string,
 ): Promise<LoginResponse> {
-  const payload = await apiRequest<unknown>(
+  const payload = await apiRequest<LoginResponse>(
     {
       method: "POST",
       url: "/agent/login",
       data: { email, password },
     },
-    { requireCsrf: true },
   );
 
-  const responseMessage = extractMessage(payload);
-  const currentAgent = extractAgentUser(payload) ?? (await fetchCurrentAgent());
+  const currentAgent = extractAgentUser(payload);
+  const token = extractToken(payload);
+
+  if (!currentAgent) {
+    throw new Error("Login berhasil, tetapi data user tidak ditemukan di response backend.");
+  }
+
+  if (!token) {
+    throw new Error("Login berhasil, tetapi token tidak ditemukan di response backend.");
+  }
+
+  storeAuthToken(token);
   storeAgent(currentAgent);
 
   return {
-    message: responseMessage ?? "Login berhasil.",
+    message: payload.message ?? "Login berhasil.",
     user: currentAgent,
+    token,
+    token_type: "Bearer",
   };
 }
 
@@ -119,15 +116,14 @@ export async function logoutAgent(): Promise<void> {
         method: "POST",
         url: "/agent/logout",
       },
-      { requireCsrf: true },
     );
     clearStoredAgent();
-    resetCsrfState();
+    clearAuthToken();
 
   } catch (error) {
     console.error("Gagal logout di server, tapi tetep kita bersihin lokal:", error);
     clearStoredAgent();
-    resetCsrfState();
+    clearAuthToken();
   }
 }
 

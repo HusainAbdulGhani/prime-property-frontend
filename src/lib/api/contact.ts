@@ -12,6 +12,5 @@ export async function submitContact(
 ): Promise<{ message: string }> {
   return apiRequest(
     { method: "POST", url: "/contact", data: payload },
-    { requireCsrf: true },
   );
 }

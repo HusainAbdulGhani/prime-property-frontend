@@ -16,6 +16,7 @@ import {
   logoutAgent,
   storeAgent,
 } from "@/lib/api/auth";
+import { getStoredToken } from "@/lib/api/client";
 import type { AgentUser } from "@/types/auth";
 
 interface AuthContextValue {
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AgentUser | null>(() => {
     if (typeof window === "undefined") return null;
+    if (!getStoredToken()) return null;
     return getStoredAgent();
   });
   const [isLoading] = useState(false);

@@ -10,6 +10,8 @@ export interface AgentUser {
 export interface LoginResponse {
   message: string;
   user: AgentUser;
+  token: string;
+  token_type: "Bearer";
 }
 
 export interface LockoutError {
