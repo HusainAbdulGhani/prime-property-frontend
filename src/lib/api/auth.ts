@@ -36,7 +36,7 @@ export async function loginAgent(
       url: "/agent/login",
       data: { email, password },
     },
-    { requireCsrf: false },
+    { requireCsrf: true },
   );
   storeAgent(data.user);
   return data;
@@ -44,17 +44,12 @@ export async function loginAgent(
 
 export async function logoutAgent(): Promise<void> {
   try {
-    const token = localStorage.getItem("agent_token"); 
-
     await apiRequest(
-      { 
-        method: "POST", 
+      {
+        method: "POST",
         url: "/agent/logout",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       },
-      { requireCsrf: false },
+      { requireCsrf: true },
     );
     clearStoredAgent();
     resetCsrfState();
