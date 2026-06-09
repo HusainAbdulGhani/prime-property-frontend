@@ -48,7 +48,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
   const visibleNav = navItems.filter(
     (item) => !item.superadminOnly || (mounted && isSuperadmin),
@@ -58,7 +59,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const userInitial = mounted && user?.name ? user.name.charAt(0).toUpperCase() : "A";
 
   return (
-    <div className="flex min-h-screen bg-softGray text-primaryBlack">
+    <div className="flex min-h-screen bg-softGray text-primaryBlack lg:pl-60">
       {sidebarOpen && (
         <button
           type="button"
@@ -68,7 +69,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-neutralWhite border-r border-primaryBlack/10 shadow-sm transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-neutralWhite border-r border-primaryBlack/10 shadow-sm transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
