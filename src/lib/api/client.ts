@@ -29,39 +29,14 @@ const csrfClient = axios.create({
 
 let csrfInitialized = false;
 
-function getCsrfToken(): string | null {
-  if (typeof document === "undefined") return null;
-
-  const match = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("XSRF-TOKEN="));
-
-  if (!match) return null;
-
-  const rawToken = match.slice("XSRF-TOKEN=".length);
-  try {
-    return decodeURIComponent(rawToken);
-  } catch {
-    return rawToken;
-  }
-}
-
 export async function ensureCsrfCookie(): Promise<void> {
   if (typeof window === "undefined") return;
 
-  const existingToken = getCsrfToken();
-  if (csrfInitialized && existingToken) {
+  if (csrfInitialized) {
     return;
   }
 
   await csrfClient.get("/sanctum/csrf-cookie");
-
-  const freshToken = getCsrfToken();
-  if (!freshToken) {
-    throw new Error(
-      "Gagal menyiapkan CSRF cookie. Pastikan backend mengizinkan credentials dan cookie XSRF-TOKEN bisa dibaca dari browser.",
-    );
-  }
 
   csrfInitialized = true;
 }
