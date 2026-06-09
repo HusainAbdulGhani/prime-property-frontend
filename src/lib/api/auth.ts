@@ -26,11 +26,74 @@ export function clearStoredAgent(): void {
   sessionStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
+function isAgentUser(value: unknown): value is AgentUser {
+  if (!value || typeof value !== "object") return false;
+
+  const candidate = value as Partial<AgentUser>;
+  return (
+    typeof candidate.id === "number" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.email === "string" &&
+    (candidate.role === "admin" || candidate.role === "superadmin")
+  );
+}
+
+function extractAgentUser(payload: unknown): AgentUser | null {
+  if (isAgentUser(payload)) return payload;
+
+  if (!payload || typeof payload !== "object") return null;
+
+  const candidate = payload as {
+    user?: unknown;
+    data?: unknown;
+    agent?: unknown;
+  };
+
+  return (
+    (isAgentUser(candidate.user) && candidate.user) ||
+    (isAgentUser(candidate.data) && candidate.data) ||
+    (isAgentUser(candidate.agent) && candidate.agent) ||
+    null
+  );
+}
+
+function extractMessage(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+
+  const candidate = payload as {
+    message?: unknown;
+    data?: { message?: unknown };
+  };
+
+  if (typeof candidate.message === "string") return candidate.message;
+  if (typeof candidate.data?.message === "string") return candidate.data.message;
+
+  return undefined;
+}
+
+async function fetchCurrentAgent(): Promise<AgentUser> {
+  const candidateEndpoints = ["/user", "/agent/me", "/agent/profile"];
+
+  for (const url of candidateEndpoints) {
+    try {
+      const payload = await apiRequest<unknown>({ method: "GET", url });
+      const user = extractAgentUser(payload);
+      if (user) return user;
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(
+    "Login berhasil, tetapi data agent tidak bisa diambil dari session backend.",
+  );
+}
+
 export async function loginAgent(
   email: string,
   password: string,
 ): Promise<LoginResponse> {
-  const data = await apiRequest<LoginResponse>(
+  const payload = await apiRequest<unknown>(
     {
       method: "POST",
       url: "/agent/login",
@@ -38,8 +101,15 @@ export async function loginAgent(
     },
     { requireCsrf: true },
   );
-  storeAgent(data.user);
-  return data;
+
+  const responseMessage = extractMessage(payload);
+  const currentAgent = extractAgentUser(payload) ?? (await fetchCurrentAgent());
+  storeAgent(currentAgent);
+
+  return {
+    message: responseMessage ?? "Login berhasil.",
+    user: currentAgent,
+  };
 }
 
 export async function logoutAgent(): Promise<void> {
